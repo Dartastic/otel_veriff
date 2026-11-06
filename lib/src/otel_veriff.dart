@@ -1,15 +1,16 @@
-// Licensed under the Dartastic Pro Software License Agreement.
+// Licensed under the Apache License, Version 2.0
 // Copyright 2025-2026 Mindful Software LLC d/b/a Dartastic.io, All rights reserved.
 
-import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
+import 'package:dartastic_opentelemetry_api/dartastic_opentelemetry_api.dart';
 
 import 'otel_veriff_suppression.dart';
 
 const _tracerName = 'dartastic_otel_libs_veriff';
 
-Tracer _tracer() => OTel.tracerProvider().getTracer(_tracerName);
+APITracer _tracer() => OTelAPI.tracerProvider().getTracer(_tracerName);
 
 class VeriffResult {
+  /// Creates a result.
   const VeriffResult({
     this.sessionId,
     this.status,
@@ -58,8 +59,13 @@ class VeriffResult {
   final int? statusCode;
 }
 
+/// What a traced call returned: the value for the caller plus fields
+/// recorded on the span.
 class VeriffCallResult<T> {
+  /// Creates a call result.
   const VeriffCallResult({required this.value, this.result});
+
+  /// The value returned to the caller.
   final T value;
   final VeriffResult? result;
 }
@@ -86,20 +92,20 @@ Future<T> tracedVeriff<T>({
   final span = _tracer().startSpan(
     'veriff $operation',
     kind: SpanKind.client,
-    attributes: OTel.attributesFromMap(m),
+    attributes: OTelAPI.attributesFromMap(m),
   );
   try {
     final r = await invoke();
     if (r.result != null) {
       final extras = <Attribute<Object>>[];
       if (r.result!.sessionId != null) {
-        extras.add(OTel.attributeString(
+        extras.add(OTelAPI.attributeString(
           'veriff.session.id',
           r.result!.sessionId!,
         ));
       }
       if (r.result!.status != null) {
-        extras.add(OTel.attributeString(
+        extras.add(OTelAPI.attributeString(
           'veriff.status',
           r.result!.status!,
         ));
@@ -111,49 +117,49 @@ Future<T> tracedVeriff<T>({
         }
       }
       if (r.result!.code != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'veriff.decision.code',
           r.result!.code!,
         ));
       }
       if (r.result!.reason != null) {
-        extras.add(OTel.attributeString(
+        extras.add(OTelAPI.attributeString(
           'veriff.decision.reason',
           r.result!.reason!,
         ));
       }
       if (r.result!.attempts != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'veriff.attempts',
           r.result!.attempts!,
         ));
       }
       if (r.result!.documentType != null) {
-        extras.add(OTel.attributeString(
+        extras.add(OTelAPI.attributeString(
           'veriff.document.type',
           r.result!.documentType!,
         ));
       }
       if (r.result!.documentCountry != null) {
-        extras.add(OTel.attributeString(
+        extras.add(OTelAPI.attributeString(
           'veriff.document.country',
           r.result!.documentCountry!,
         ));
       }
       if (r.result!.flowKind != null) {
-        extras.add(OTel.attributeString(
+        extras.add(OTelAPI.attributeString(
           'veriff.flow.kind',
           r.result!.flowKind!,
         ));
       }
       if (r.result!.requestId != null) {
-        extras.add(OTel.attributeString(
+        extras.add(OTelAPI.attributeString(
           'veriff.request.id',
           r.result!.requestId!,
         ));
       }
       if (r.result!.statusCode != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'http.response.status_code',
           r.result!.statusCode!,
         ));
@@ -164,13 +170,13 @@ Future<T> tracedVeriff<T>({
           );
         }
       }
-      if (extras.isNotEmpty) span.addAttributes(OTel.attributes(extras));
+      if (extras.isNotEmpty) span.addAttributes(OTelAPI.attributes(extras));
     }
     return r.value;
   } catch (e, st) {
-    span.addAttributes(OTel.attributes([
-      OTel.attributeString(
-        ErrorResource.errorType.key,
+    span.addAttributes(OTelAPI.attributes([
+      OTelAPI.attributeString(
+        ErrorAttributes.errorType.key,
         e.runtimeType.toString(),
       ),
     ]));
